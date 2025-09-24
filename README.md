@@ -19,10 +19,25 @@ All Python dependencies are listed in **`requirements.txt`**. We recommend **Pyt
 ```bash
 conda create -n foundad python=3.10
 conda activate foundad
+git clone git@github.com:ymxlzgy/FoundAD.git
 pip install -r requirements.txt
 pip install -e .
 ```
 
+## Quick Start
+Download our trained weights: [<u>1-shot on MVTec AD</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_1shot.zip) and [<u>1-shot on VisA</u>]() to `./logs/`.
+
+Run
+```bash
+python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=assets/mvtec
+```
+
+Or
+```bash
+python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa data.data_name=visa_1shot data.test_root=assets/visa
+```
+---
+---
 
 ## Dataset Preparation
 
@@ -30,14 +45,12 @@ FoundAD supports the following anomaly-detection benchmarks:
 
 | Dataset | Preferred download |
 |---------|--------------------|
-| **MVTec AD** | Official site: <https://www.mvtec.com/company/research/datasets/mvtec-ad> |
-| **VisA** | We use the structured dataset of RealNet: <https://github.com/cnulab/RealNet> |
+| **MVTec AD** | Official site: [<u>Here</u>](https://www.mvtec.com/company/research/datasets/mvtec-ad) |
+| **VisA** | We use the structured dataset of [<u>RealNet</u>](https://github.com/cnulab/RealNet). |
 
----
 
-## Quick Start
 
-### Few-Shot Sampling
+## Few-Shot Sampling
 
 Create a **few-shot** subset with `sample.py`:
 
@@ -46,16 +59,14 @@ python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/me
 ```
 `source` is the dataset folder. `target` is the folder of few-shot samples.
 
-### Model Training
-
-Train:
+## Model Training
 
 ```bash
 python foundad/main.py mode=train data.batch_size=8 data.dataset=mvtec data.data_name=mvtec_1shot data.data_path=/media/ymxlzgy/Data21/xinyan app=train_dinov2 diy_name=dbug
 ```
 `data.dataset` is "mvtec" or "visa". `data.data_name` is the folder name of few-shot samples. `data.data_path` is the path where the few-shot folder is at. `app` is train_dinov2 or train_dinov3 under configs/app/. `diy_name` (optionally) is the post-fix name of the model saving directory. To adjust the layer, please specify `app.meta.n_layer`.
 
-### Anomaly Detection / Inference
+## Anomaly Detection / Inference
 
 After training, run inference:
 
