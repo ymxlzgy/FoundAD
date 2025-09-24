@@ -86,6 +86,10 @@ dist/
 pip-wheel-metadata/
 wheels/
 *.whl
+tox.ini
+pyproject.toml
+setup.cfg
+
 
 # =============================
 # Data / Results
@@ -112,6 +116,7 @@ datasets/
 results/
 outputs/
 logs/
+
 
 # =============================
 # Hidden files (dotfiles)
