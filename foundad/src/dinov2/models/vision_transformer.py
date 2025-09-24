@@ -446,6 +446,8 @@ class VisionTransformerPredictor(nn.Module):
         self.apply(self._init_weights)
         self.fix_init_weight()
 
+        self.feat_normed = kwargs.get("feat_normed", False)
+
     def fix_init_weight(self):
         def rescale(param, layer_id):
             param.div_(math.sqrt(2.0 * layer_id))
@@ -489,6 +491,9 @@ class VisionTransformerPredictor(nn.Module):
         # -- return preds for mask tokens
         # x = x[:, N_ctxt:]
         x = self.predictor_proj(x)
+
+        if self.feat_normed:
+            x = torch.nn.functional.normalize(x, dim=-1)
 
         return x
 

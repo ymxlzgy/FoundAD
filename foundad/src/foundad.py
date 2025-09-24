@@ -5,7 +5,7 @@ import importlib
 import yaml, numpy as np, torch
 import torch.nn as nn
 from PIL import Image
-
+import torch.nn.functional as F
 from src.utils.tensors import trunc_normal_
 from src.datasets.dataset import build_dataloader
 import src.dinov2.models.vision_transformer as vit
@@ -23,17 +23,19 @@ class LinearProjector(torch.nn.Module):
 
 
 class VisionModule(nn.Module):
-    def __init__(self, model_name: str, pred_depth: int, pred_emb_dim: int, use_cuda: bool = True, if_pe: bool = True):
+    def __init__(self, model_name: str, pred_depth: int, pred_emb_dim: int, use_cuda: bool = True, if_pe: bool = True, feat_normed: bool = False):
         super().__init__()
         (self.encoder, self.num_patches, self.embed_dim, self.processor, self.projector) = self._build_encoder(model_name)
         self.model_name = model_name
 
         self.predictor = vit.__dict__["vit_predictor"](num_patches=self.num_patches, embed_dim=self.embed_dim,
-                                                         predictor_embed_dim=pred_emb_dim, depth=pred_depth, if_pe=if_pe)
+                                                         predictor_embed_dim=pred_emb_dim, depth=pred_depth, if_pe=if_pe, feat_normed=feat_normed)
         self._init_predictor(self.predictor)
         self.dropout = nn.Dropout(0.2)
         if use_cuda and torch.cuda.is_available():
             self.cuda()
+        self.feat_normed = self.predictor.feat_normed # it depends on the predictor
+        print(f"Normed features: {self.feat_normed}")
 
     def predict(self, z: torch.Tensor) -> torch.Tensor:
         return self.predictor(z)
@@ -95,9 +97,9 @@ class VisionModule(nn.Module):
             h = self.projector(h) if self.projector else h
         else:
             raise NotImplementedError(self.model_name)
-        
-        # print(imgs.shape)
-        # print(h.shape)
+
+        if self.feat_normed:
+            h = F.normalize(h, dim=-1)
 
         return h
 

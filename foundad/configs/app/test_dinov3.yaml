@@ -1,11 +1,14 @@
 # @package app
 meta:
-  model: 'dinov3'  
-  crop_size: 512 
-  pred_depth: 6            
-  pred_emb_dim: 384        
+  model: 'dinov3'
+  crop_size: 512
+  pred_depth: 6
+  pred_emb_dim: 384
   use_bfloat16: false
-  if_pred_pe: false    
+  if_pred_pe: false
+  n_layer: 3
+  feat_normed: false
+  loss_mode: 'l2'  # l2 or smooth_l1 
 
 ckpt_step: 1950
 ckpt_path: 'logs/${data.data_name}/${app.meta.model}${oc.select:diy_name,""}/train-step${app.ckpt_step}.pth.tar'                       
