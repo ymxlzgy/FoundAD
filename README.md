@@ -1,6 +1,7 @@
 
 # FoundAD
----
+
+This repo contains implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv]().
 
 ## Table of Contents
 1. [Environment Setup](#environment-setup)
@@ -44,8 +45,6 @@ python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa d
 
 ### Dataset Preparation
 
-FoundAD supports the following anomaly-detection benchmarks:
-
 | Dataset | Preferred download |
 |---------|--------------------|
 | **MVTec AD** | Official site: [<u>Here</u>](https://www.mvtec.com/company/research/datasets/mvtec-ad) |
@@ -60,28 +59,23 @@ Create a **few-shot** subset with `sample.py`:
 ```bash
 python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/media/ymxlzgy/Data21/xinyan/visa_tmp num_samples=2
 ```
-`source` is the dataset folder. `target` is the folder of few-shot samples.
+where `source` is the dataset folder, and `target` is the folder of few-shot samples.
 
 ### Model Training
 
 ```bash
 python foundad/main.py mode=train data.batch_size=8 data.dataset=mvtec data.data_name=mvtec_1shot data.data_path=/media/ymxlzgy/Data21/xinyan app=train_dinov2 diy_name=dbug
 ```
-`data.dataset` is "mvtec" or "visa". `data.data_name` is the folder name of few-shot samples. `data.data_path` is the path where the few-shot folder is at. `app` is train_dinov2 or train_dinov3 under configs/app/. `diy_name` (optionally) is the post-fix name of the model saving directory. To adjust the layer, please specify `app.meta.n_layer`.
+where `data.dataset` is "mvtec" or "visa", `data.data_name` is the folder name of few-shot samples, `data.data_path` is the path where the few-shot folder is at, `app` is "train_dinov2" or "train_dinov3" under `configs/app/`, and `diy_name` (optionally) is the post-fix name of the model saving directory. To adjust the layer, please specify `app.meta.n_layer`.
 
 ### Anomaly Detection / Inference
 
 After training, run inference:
 
 ```bash
-python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot diy_name=dbug data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec app=test_dinov3 app.ckpt_step=1950
-```
-
-(For loading saved params) Or
-```bash
 python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot diy_name=dbug data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec app=test app.ckpt_step=1950
 ```
-`data.test_root` is the dataset folder. `app` is test_dinov2 or test_dinov3 under configs/app/. To adjust sample number K, please specify `testing.K_top_mvtec` and `testing.K_top_visa`.
+where `data.test_root` is the dataset folder, and `app` is test_dinov2 or test_dinov3 under `configs/app/`. To adjust sample number K, please specify `testing.K_top_mvtec` and `testing.K_top_visa`.
 
 ## Acknowledgement
 This repo utilizes [DINOv3](https://github.com/facebookresearch/dinov3), [DINOv2](https://github.com/facebookresearch/dinov2), [DINO](https://github.com/facebookresearch/dino), [SigLIP](https://github.com/google-research/big_vision), [CLIP](https://github.com/openai/CLIP) and [WideResNet](https://pytorch.org/hub/pytorch_vision_wide_resnet/). We also thank [I-JEPA](https://github.com/facebookresearch/ijepa) for the inspiration.
