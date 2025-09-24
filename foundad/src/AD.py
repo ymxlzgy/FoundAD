@@ -48,7 +48,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     crop = cfg["meta"]["crop_size"]
     n_layer = cfg["meta"].get("n_layer", 3)
 
-    error = cfg["meta"].get("loss_mode", "l2")
+    # error = cfg["meta"].get("loss_mode", "l2")
 
     dataset_name = cfg["data"].get("dataset", "mvtec")
     if dataset_name == 'mvtec':
@@ -99,7 +99,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
 
             enc = model.target_features(img, paths, n_layer=n_layer)
             pred = model.predict(enc)
-            
+
             # if error == 'l2':
             #     l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
             # elif error == 'smooth_l1':
@@ -116,7 +116,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
             pix_buf.append(pix.squeeze(1).cpu()); img_buf.append(img.cpu()); mask_buf.append(mask.cpu())
 
         p_np = torch.tensor(patch_scores).numpy()
-        p_np = (p_np - p_np.min()) / (p_np.max() - p_np.min() + 1e-8)
+        p_np = (p_np - p_np.min()) / (p_np.max() - p_np.min() + 1e-8) # normed
 
         pix_all = torch.cat(pix_buf)
         gmin, gmax = pix_all.min(), pix_all.max()

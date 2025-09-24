@@ -108,13 +108,64 @@ def build_train_transform_new(
     ops.extend(build_base_transform(resize))
     return transforms.Compose(ops)
 
+
+def build_train_transform_staged(
+    resize=518,
+    use_hflip=False,
+    use_vflip=False,
+    use_rotate90=False,
+    use_color_jitter=False,
+    use_gray=False,
+    use_blur=False,
+    p_orient=0.3,
+    p_appear=0.3,
+):
+    ops = []
+
+    orient_candidates = []
+    if use_hflip:
+        orient_candidates.append(transforms.RandomHorizontalFlip(p=1.0))
+    if use_vflip:
+        orient_candidates.append(transforms.RandomVerticalFlip(p=1.0))
+    if use_rotate90:
+        orient_candidates.append(RandomRotate90or270(p=1.0))
+
+    if orient_candidates:
+        ops.append(
+            transforms.RandomApply(
+                [transforms.RandomChoice(orient_candidates)],
+                p=p_orient
+            )
+        )
+
+    appear_candidates = []
+    if use_color_jitter:
+        appear_candidates.append(transforms.ColorJitter(0.3, 0.3, 0.3, 0.05))  # 确定性
+    if use_gray:
+        appear_candidates.append(transforms.RandomGrayscale(p=1.0))            # 确定性
+    if use_blur:
+        ksz = 23 if resize >= 384 else 11
+        appear_candidates.append(transforms.GaussianBlur(kernel_size=ksz, sigma=(0.1, 2.0)))
+
+    if appear_candidates:
+        ops.append(
+            transforms.RandomApply(
+                [transforms.RandomChoice(appear_candidates)],
+                p=p_appear
+            )
+        )
+
+    ops.extend(build_base_transform(resize))
+
+    return transforms.Compose(ops)
+
 class TrainDataset(torchvision.datasets.ImageFolder):
 
     def __init__(self, root: str, resize = 518, **kwargs):
         super().__init__(os.path.join(root, 'train'))
         self.resize = resize
         self.root = os.path.join(root, "train")
-        self.transform = build_train_transform_new(
+        self.transform = build_train_transform_staged(
             self.resize,
             use_hflip=kwargs.get("use_hflip",False),
             use_vflip=kwargs.get("use_vflip",False),
