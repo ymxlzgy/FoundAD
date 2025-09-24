@@ -1,6 +1,0 @@
-[submodule "ADJEPA/src/submodule_dinosiglip"]
-	path = ADJEPA/src/submodule_dinosiglip
-	url = https://github.com/gagapaga/submodule_dinosiglip.git
-[submodule "ADJEPA/src/vision_backbone"]
-	path = ADJEPA/src/vision_backbone
-	url = https://github.com/gagapaga/submodule_dinosiglip.git
