@@ -40,6 +40,7 @@ class Trainer:
         if self.model.projector:
             self.model.projector.requires_grad_(True)
         self.loss_mode = args["meta"].get("loss_mode", "l2") # l2 or smooth_l1
+        logger.info(f"Loss mode {self.loss_mode}")
 
         # ---------- data ----------
         dcfg = args["data"]
@@ -131,11 +132,11 @@ class Trainer:
                 if gstep % 10 == 0: self._save_ckpt(ep, gstep)
                 self.csv_logger.log(ep+1, itr, loss.item(), t)
                 if itr % 10 == 0:
-                    logger.info("[E %d I %d] loss %.3f (avg %.3f) mem %.2fMB (%.1fms)", ep+1, itr, loss.item(), loss_m.avg, torch.cuda.max_memory_allocated()/1024**2, time_m.avg)
+                    logger.info("[E %d I %d] loss %.6f (avg %.6f) mem %.2fMB (%.1fms)", ep+1, itr, loss.item(), loss_m.avg, torch.cuda.max_memory_allocated()/1024**2, time_m.avg)
                     if grad_stats:
                         logger.info("    grad: [%.2e %.2e] (%.2e %.2e)", grad_stats.first_layer, grad_stats.last_layer, grad_stats.min, grad_stats.max)
             logger.info(
-                "Epoch %d complete. Avg loss %.3f, lr %.6f",
+                "Epoch %d complete. Avg loss %.6f, lr %.6f",
                 ep + 1,
                 loss_m.avg,
                 self.optimizer.param_groups[0]['lr']

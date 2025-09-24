@@ -99,12 +99,15 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
 
             enc = model.target_features(img, paths, n_layer=n_layer)
             pred = model.predict(enc)
-            if error == 'l2':
-                l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
-            elif error == 'smooth_l1':
-                l = F.smooth_l1_loss(enc, pred, reduction="none").mean(dim=2)
-            else:
-                raise NotImplementedError(f"Loss mode {error} not implemented")
+            
+            # if error == 'l2':
+            #     l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
+            # elif error == 'smooth_l1':
+            #     l = F.smooth_l1_loss(enc, pred, reduction="none").mean(dim=2)
+            # else:
+            #     raise NotImplementedError(f"Loss mode {error} not implemented")
+
+            l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
 
             topk = torch.topk(l, K, dim=1).values.mean(dim=1)
             patch_scores.extend(topk.cpu())
