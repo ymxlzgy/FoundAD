@@ -3,9 +3,9 @@ data:
   crop_size: 518
   num_workers: 0
   pin_mem: true
-  root_path: path/images
+  root_path: /media/ymxlzgy/Data21/xinyan/mvtec_1shot
 logging:
-  folder: path/to/save
+  folder: logs
   write_tag: train
 meta:
   model: 'dinov2'

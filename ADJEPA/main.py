@@ -4,9 +4,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
+import os
 import argparse
-
+import logging
 import multiprocessing as mp
 
 import pprint
@@ -31,10 +31,7 @@ parser.add_argument(
     default='train')
 
 def process_main(rank, fname, world_size, devices, mode):
-    import os
     os.environ['CUDA_VISIBLE_DEVICES'] = str(devices[rank].split(':')[-1])
-
-    import logging
     logging.basicConfig()
     logger = logging.getLogger()
     if rank == 0:
@@ -56,8 +53,8 @@ def process_main(rank, fname, world_size, devices, mode):
     os.environ['MASTER_PORT'] = str(40112)
     torch.distributed.init_process_group(
         backend='nccl',
-        world_size=1,
-        rank=0)
+        world_size=world_size,
+        rank=rank)
 
     if mode == 'train':
         app_main_mvtec(args=params)
