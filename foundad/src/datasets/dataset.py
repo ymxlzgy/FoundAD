@@ -9,18 +9,73 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
+def build_base_transform(resize: int = 518):
+    return [
+        transforms.Resize((resize, resize)),
+        transforms.ToTensor(),
+        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+    ]
+
+def build_train_transform(
+    resize=518,
+    use_hflip=False,
+    use_vflip=False,
+    use_rotate90=False,
+    use_color_jitter=False,
+    use_gray=False,
+    use_blur=False,
+    use_random_erasing=False,
+):
+    ops = []
+
+    if use_hflip:
+        ops.append(transforms.RandomHorizontalFlip(p=0.5))
+
+    if use_vflip:
+        ops.append(transforms.RandomVerticalFlip(p=0.5))
+
+    if use_rotate90:
+        ops.append(transforms.RandomChoice([
+            transforms.RandomRotation([90]),
+            transforms.RandomRotation([270]),
+        ]))
+
+    if use_color_jitter:
+        ops.append(transforms.ColorJitter(0.3,0.3,0.3,0.05))
+
+    if use_gray:
+        ops.append(transforms.RandomGrayscale(p=0.1))
+
+    if use_blur:
+        ops.append(transforms.GaussianBlur(
+            kernel_size=23 if resize >= 384 else 11, sigma=(0.1, 2.0))
+        )
+
+    ops.extend(build_base_transform(resize))
+
+    if use_random_erasing:
+        ops.append(transforms.RandomErasing(p=0.25, scale=(0.02,0.15), ratio=(0.3,3.3)))
+
+    return transforms.Compose(ops)
+
 class TrainDataset(torchvision.datasets.ImageFolder):
 
-    def __init__(self, root: str, resize = 518):
+    def __init__(self, root: str, resize = 518, **kwargs):
         super().__init__(os.path.join(root, 'train'))
         self.resize = resize
         self.root = os.path.join(root, "train")
-        self.transform = transforms.Compose([
-            transforms.Resize((resize, resize)),
-            transforms.ToTensor(),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-        ])
+        self.transform = build_train_transform(
+            self.resize,
+            use_hflip=kwargs.get("use_hflip",False),
+            use_vflip=kwargs.get("use_vflip",False),
+            use_rotate90=kwargs.get("use_rotate90",False),
+            use_color_jitter=kwargs.get("use_color_jitter",False),
+            use_gray=kwargs.get("use_gray",False),
+            use_blur=kwargs.get("use_blur",False),
+            use_random_erasing=kwargs.get("use_random_erasing",False),
+        )
         self.samples = [(path, self.classes[target]) for (path, target) in self.samples]
+        print(f"Totally {len(self.samples)} will be trained..")
 
     def __getitem__(self, index):
         """
@@ -28,9 +83,7 @@ class TrainDataset(torchvision.datasets.ImageFolder):
         """
         path_train, target = self.samples[index]
         image_train = self.loader(path_train).convert('RGB')
-
-        if self.transform is not None:
-            image_train = self.transform(image_train)
+        image_train = self.transform(image_train)
                 
         return image_train, target, path_train
     
@@ -54,12 +107,7 @@ class TestDataset(Dataset):
 
         self.imgpaths_per_class, self.data_to_iterate = self.get_image_data()
 
-        self.transform_img = [
-            transforms.Resize((resize, resize)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ]
-        self.transform_img = transforms.Compose(self.transform_img)
+        self.transform_img = transforms.Compose(build_base_transform(resize))
 
         self.transform_mask = [
             transforms.Resize((resize, resize)),

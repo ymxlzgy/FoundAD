@@ -48,6 +48,13 @@ class Trainer:
             batch_size=dcfg["batch_size"],
             pin_mem=dcfg["pin_mem"],
             resize=mcfg["crop_size"],
+            use_hflip=dcfg.get("use_hflip",False),
+            use_vflip=dcfg.get("use_vflip",False),
+            use_rotate90=dcfg.get("use_rotate90",False),
+            use_color_jitter=dcfg.get("use_color_jitter",False),
+            use_gray=dcfg.get("use_gray",False),
+            use_blur=dcfg.get("use_blur",False),
+            use_random_erasing=dcfg.get("use_random_erasing",False)
         )
         self.cutpaste = CutPasteUnion(colorJitter=0.5)
         self.batch_size = dcfg["batch_size"]
@@ -67,7 +74,7 @@ class Trainer:
         # ---------- logging ----------
         lcfg: Dict[str, Any] = args.get("logging", {})
         log_dir = Path(lcfg.get("folder", "logs"))
-        log_dir.mkdir(parents=True, exist_ok=True)     
+        # log_dir.mkdir(parents=True, exist_ok=True)     
         self.ckpt_dir = log_dir
 
         self.tag = lcfg.get("write_tag", "train")      
@@ -117,7 +124,7 @@ class Trainer:
 
 def main(args: Dict[str, Any]) -> None:
     if args is None:
-        cfg_path = Path(__file__).with_name("params-ADJEPA.yaml");
+        cfg_path = Path(__file__).with_name("params.yaml");
         if not cfg_path.exists(): raise FileNotFoundError("No args provided and default parameter file does not exist")
         with open(cfg_path) as f: args = yaml.safe_load(f)
     Trainer(args).train()

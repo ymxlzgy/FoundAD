@@ -88,6 +88,14 @@ def process_main(rank: int, cfg_dict: dict, world_size: int):
         rank=rank
     )
 
+    if rank==0:
+        log_dir = model_params["logging"]["folder"]
+        os.makedirs(log_dir, exist_ok=True)
+        params_save_path = os.path.join(log_dir, "params.yaml")
+        with open(params_save_path, "w") as f:
+            yaml.safe_dump(model_params, f, default_flow_style=False, sort_keys=False)
+        print(f"Config saved to {params_save_path}")
+
     if mode == "train":
         app_main_mvtec(args=model_params)
     elif mode == "AD":
