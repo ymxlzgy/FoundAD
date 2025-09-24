@@ -51,15 +51,16 @@ python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/me
 Train:
 
 ```bash
-python foundad/main.py mode=train data.batch_size=8 data.dataset=mvtec data.data_name=mvtec_1shot data.data_path=/media/ymxlzgy/Data21/xinyan app=train_dinov2
+python foundad/main.py mode=train data.batch_size=8 data.dataset=mvtec data.data_name=mvtec_1shot data.data_path=/media/ymxlzgy/Data21/xinyan app=train_dinov2 diy_name=dbug
 ```
-`data.dataset` is "mvtec" or "visa". `data.data_name` is the folder name of few-shot samples. `data.data_path` is the path where the few-shot folder is at. `app` is train_dinov2 or train_dinov3 under configs/app/.
+`data.dataset` is "mvtec" or "visa". `data.data_name` is the folder name of few-shot samples. `data.data_path` is the path where the few-shot folder is at. `app` is train_dinov2 or train_dinov3 under configs/app/. `diy_name` (optionally) is the post-fix name of the model saving directory.
+
 ### Anomaly Detection / Inference
 
 After training, run inference:
 
 ```bash
-python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec app=test_dinov3 app.ckpt_step=1950
+python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec diy_name=dbug app=test_dinov3 app.ckpt_step=1950
 ```
  `data.test_root` is the dataset folder. `app` is test_dinov2 or test_dinov3 under configs/app/.
 
