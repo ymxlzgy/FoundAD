@@ -8,7 +8,7 @@ allowed_exts: [".png", ".jpg", ".jpeg"]
 
 rename_images: false
 
-seed: 42
+seed: 45
 
 user_config: ""
 
