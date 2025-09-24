@@ -107,7 +107,7 @@ def process_main(rank: int, cfg_dict: dict, world_size: int):
                 assert cfg_dict['diy_name']==saved_params['diy_name']
                 params['meta'] = saved_params['meta']
                 params["ckpt_path"] = os.path.join(saved_params["logging"]["folder"],f"train-step{params['ckpt_step']}.pth.tar")
-                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],"eval")
+                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],"eval",params['ckpt_step'])
         AD(args=params)
     else:
         if rank == 0:
