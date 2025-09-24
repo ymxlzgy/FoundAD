@@ -60,10 +60,13 @@ python foundad/main.py mode=train data.batch_size=8 data.dataset=mvtec data.data
 After training, run inference:
 
 ```bash
-python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec diy_name=dbug app=test_dinov3 app.ckpt_step=1950
+python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot diy_name=dbug data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec app=test_dinov3 app.ckpt_step=1950
 ```
  `data.test_root` is the dataset folder. `app` is test_dinov2 or test_dinov3 under configs/app/.
 
-
+(For loading saved params) Or
+```bash
+python foundad/main.py mode=AD data.dataset=mvtec data.data_name=mvtec_1shot diy_name=dbug data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec app=test app.ckpt_step=1950
+```
 ---
 
