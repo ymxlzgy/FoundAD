@@ -57,7 +57,9 @@ def sample_images(
             continue
 
         k = min(num_samples, len(imgs))
-        selected = random.sample(imgs, k)
+        # selected = random.sample(imgs, k)
+        random.shuffle(imgs)
+        selected = imgs[:k]
 
         dest_dir = target_train_root / cat_name
         dest_dir.mkdir(parents=True, exist_ok=True)

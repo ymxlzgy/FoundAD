@@ -57,7 +57,6 @@ class Trainer:
             use_color_jitter=dcfg.get("use_color_jitter",False),
             use_gray=dcfg.get("use_gray",False),
             use_blur=dcfg.get("use_blur",False),
-            # use_random_erasing=dcfg.get("use_random_erasing",False)
         )
         self.cutpaste = CutPasteUnion(colorJitter=0.5)
         self.batch_size = dcfg["batch_size"]
@@ -129,9 +128,9 @@ class Trainer:
                 else: loss.backward(); self.optimizer.step()
                 grad_stats = grad_logger(self.model.predictor.named_parameters()); self.optimizer.zero_grad()
                 loss_m.update(loss.item()); time_m.update(t); gstep += 1
-                if gstep % 10 == 0: self._save_ckpt(ep, gstep)
+                if gstep % 100 == 0: self._save_ckpt(ep, gstep)
                 self.csv_logger.log(ep+1, itr, loss.item(), t)
-                if itr % 10 == 0:
+                if itr % 100 == 0:
                     logger.info("[E %d I %d] loss %.6f (avg %.6f) mem %.2fMB (%.1fms)", ep+1, itr, loss.item(), loss_m.avg, torch.cuda.max_memory_allocated()/1024**2, time_m.avg)
                     if grad_stats:
                         logger.info("    grad: [%.2e %.2e] (%.2e %.2e)", grad_stats.first_layer, grad_stats.last_layer, grad_stats.min, grad_stats.max)

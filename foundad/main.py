@@ -1,9 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
 import os
 import logging
 import multiprocessing as mp
@@ -13,8 +7,7 @@ import yaml
 import torch
 
 from src.train import main as app_main_mvtec
-# from src.evaluation import main as app_eval
-from src.AD import main as AD
+from src.AD import main as AD, _demo
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -77,8 +70,24 @@ def process_main(rank: int, cfg_dict: dict, world_size: int):
                 assert cfg_dict['diy_name']==saved_params['diy_name']
                 params['meta'] = saved_params['meta']
                 params["ckpt_path"] = os.path.join(saved_params["logging"]["folder"],f"train-step{params['ckpt_step']}.pth.tar")
-                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],"eval",str(params['ckpt_step']))
-        AD(args=params)
+                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],f"eval/{str(params['ckpt_step'])}")
+            AD(args=params)
+        else:
+            print("No ckpt path is found.")
+    elif mode == "demo":
+        load_path = os.path.join('logs', cfg_dict['data']['data_name'], params.get('model_name','')+cfg_dict['diy_name'])
+        saved_path = os.path.join(load_path,"params.yaml")
+        if os.path.exists(saved_path):
+            with open(saved_path, "r") as f:
+                saved_params = yaml.safe_load(f)
+                assert cfg_dict['diy_name']==saved_params['diy_name']
+                params['meta'] = saved_params['meta']
+                params["ckpt_path"] = os.path.join(saved_params["logging"]["folder"],f"pretrained.pth.tar")
+                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],"demo")
+            print(f"loading {params['ckpt_path']}...")
+            _demo(params["ckpt_path"], params)
+        else:
+            print("No ckpt is found.")
     else:
         if rank == 0:
             logger.error(f"Unknown mode: {mode}")

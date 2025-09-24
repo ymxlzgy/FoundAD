@@ -9,3 +9,4 @@ from .patch_embed import PatchEmbed
 from .swiglu_ffn import SwiGLUFFN, SwiGLUFFNFused
 from .block import NestedTensorBlock
 from .attention import MemEffAttention
+from .rope_position_encoding import RopePositionEmbedding

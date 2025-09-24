@@ -1,7 +1,6 @@
+# FoundAD <img src="./assets/icon.png" alt="FoundAD logo showing a stylized magnifying glass over abstract shapes, representing anomaly detection in visual data. The logo is set against a neutral background and does not contain any text. The tone is professional and focused." width="30" height="30">
 
-# FoundAD <img src="./assets/icon.png" alt="Logo" width="30" height="30">
-
-This repo contains implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv]().
+The implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv]().
 
 ## Table of Contents
 1. [Environment Setup](#environment-setup)
@@ -29,21 +28,21 @@ pip install -e .
 
 
 ## Quick Start
-Before we start, please make sure you have the rights to use [DINOv3](https://github.com/facebookresearch/dinov3). Download our trained weights based on DINOv3 ViT-B/16, and put them to `./logs/`. 
-||1-shot|2-shot|4-shot|8-shot|
-|---------|:---------:|:---------:|:---------:|:---------:|
-|**MVTec AD**|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_4shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_8shot.zip)|
-|**VisA**  |[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_4shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_8shot.zip)|
+Before we start, please make sure you have the rights to use [DINOv3](https://github.com/facebookresearch/dinov3). Download our trained manifold projectors, and put them to `./logs/`. 
+||1-shot|2-shot|4-shot|
+|---------|:---------:|:---------:|:---------:|
+|**MVTec AD**|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_4shot.zip)|
+|**VisA**  |[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_4shot.zip)|
 
 
-Run
+Run a demo on MVTec-AD 
 ```bash
-python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=assets/mvtec
+python foundad/main.py mode=demo app=test testing.segmentation_vis=True data.dataset=mvtec data.data_name=mvtec_1shot data.test_root=assets/mvtec
 ```
 
-Or
+Or a demo on VisA
 ```bash
-python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa data.data_name=visa_1shot data.test_root=assets/visa
+python foundad/main.py mode=demo app=test testing.segmentation_vis=True data.dataset=visa data.data_name=visa_4shot data.test_root=assets/visa
 ```
 
 
@@ -61,9 +60,9 @@ python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa d
 Create a **few-shot** subset with `sample.py`:
 
 ```bash
-python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/media/ymxlzgy/Data21/xinyan/visa_tmp num_samples=2
+python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/media/ymxlzgy/Data21/xinyan/visa_tmp seed=42 num_samples=2
 ```
-where `source` is the dataset folder, and `target` is the folder of few-shot samples. We also provide the data we sampled and trained the models on: [<u>⬇️ mvtec-few-shot</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/few-shot-mvtec.zip) and [<u>⬇️ visa-few-shot</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/few-shot-visa.zip).
+where `source` is the dataset folder, `target` is the folder of few-shot samples, and `num_samples` is the number of samples training models, e.g., 2 for 2-shot learning. `seed` can be adjusted to have multiple rounds of experiment.
 
 ### Model Training
 

@@ -20,9 +20,15 @@ import torch.nn as nn
 import torch.utils.checkpoint
 from torch.nn.init import trunc_normal_
 
-from src.dinov2.layers import Mlp, PatchEmbed, SwiGLUFFNFused, MemEffAttention, NestedTensorBlock as Block
+from src.dinov2.layers import Mlp, PatchEmbed, SwiGLUFFNFused, MemEffAttention, NestedTensorBlock as Block, RopePositionEmbedding
 
 logger = logging.getLogger("dinov2")
+
+dtype_dict = {
+    "fp32": torch.float32,
+    "fp16": torch.float16,
+    "bf16": torch.bfloat16,
+}
 
 def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False):
     """
@@ -428,10 +434,26 @@ class VisionTransformerPredictor(nn.Module):
         # --
         self.init_std = init_std
         self.if_pe = if_pe
+        self.if_rope = kwargs.get("if_rope", False)
         if self.if_pe:
-            self.predictor_pos_embed = nn.Parameter(torch.zeros(1, num_patches, predictor_embed_dim),
-                                                    requires_grad=False)
-            trunc_normal_(self.predictor_pos_embed, std=self.init_std)
+            if self.if_rope:
+                self.predictor_pos_embed = RopePositionEmbedding(
+                    embed_dim=embed_dim,
+                    num_heads=num_heads,
+                    base=kwargs.get("pos_embed_rope_base",100),
+                    min_period=kwargs.get("pos_embed_rope_min_period",None),
+                    max_period=kwargs.get("pos_embed_rope_max_period",None),
+                    normalize_coords=kwargs.get("pos_embed_rope_normalize_coords","separate"),
+                    shift_coords=kwargs.get("pos_embed_rope_shift_coords",None),
+                    jitter_coords=kwargs.get("pos_embed_rope_jitter_coords",None),
+                    rescale_coords=kwargs.get("pos_embed_rope_rescale_coords",2),
+                    dtype=dtype_dict[kwargs.get("pos_embed_rope_dtype","fp32")],
+                    device=kwargs.get("device",'cpu'),
+                )
+            else:
+                self.predictor_pos_embed = nn.Parameter(torch.zeros(1, num_patches, predictor_embed_dim),
+                                                        requires_grad=False)
+                trunc_normal_(self.predictor_pos_embed, std=self.init_std)
         else:
             self.predictor_pos_embed = None
         # --
@@ -457,6 +479,9 @@ class VisionTransformerPredictor(nn.Module):
             rescale(layer.mlp.fc2.weight.data, layer_id + 1)
 
     def _init_weights(self, m):
+        if self.if_rope:
+            self.predictor_pos_embed._init_weights()
+
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=self.init_std)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -475,9 +500,13 @@ class VisionTransformerPredictor(nn.Module):
         x = self.predictor_embed(x)
 
         if self.if_pe:
-            x_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)
-            print(x_pos_embed.shape)
-            x = x + x_pos_embed
+            if self.if_rope: #TODO
+                H,W=32,32
+                rope_sincos = self.predictor_pos_embed(H=H, W=W)
+            else:
+                x_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)
+                # print(x_pos_embed.shape)
+                x = x + x_pos_embed
 
         _, N_ctxt, D = x.shape
 
