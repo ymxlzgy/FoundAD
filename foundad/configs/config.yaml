@@ -58,7 +58,7 @@ data:
 optimization:
   weight_decay: 1e-4
   epochs: 2000
-  lr: 0.005
+  lr: 0.001
   lr_config: const # const, cosine, step, cosine_warmup
   min_lr: 1e-4 # for cosine and cosine_warmup
   warmup_epoch: 100 # cosine_warmup
