@@ -56,9 +56,16 @@ data:
   use_blur: True
 
 optimization:
+  weight_decay: 1e-4
   epochs: 2000
   lr: 0.005
-  weight_decay: 1e-4
+  lr_config: const # const, cosine, step, cosine_warmup
+  min_lr: 1e-4 # for cosine and cosine_warmup
+  warmup_epoch: 100 # cosine_warmup
+  step_size: 300 # step
+  gamma: 0.1 # step
+  
+  
 
 testing:
   K_top_mvtec: 10    

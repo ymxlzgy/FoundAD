@@ -80,9 +80,8 @@ def build_train_transform_new(
     use_color_jitter=False,
     use_gray=False,
     use_blur=False,
-    p_any=0.3,  # 全局：仅以 p_any 的概率做“一种”增强
+    p_any=0.3,
 ):
-    # 先收集可用的候选增强（每个都是“会改变图像”的操作）
     candidates = []
     if use_hflip:      
         candidates.append(transforms.RandomHorizontalFlip(p=1.0))

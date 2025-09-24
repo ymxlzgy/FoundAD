@@ -38,12 +38,12 @@ class VisionModule(nn.Module):
     def predict(self, z: torch.Tensor) -> torch.Tensor:
         return self.predictor(z)
     
-    def target_features(self, images, paths):
+    def target_features(self, images, paths, n_layer=3):
         with torch.no_grad():
-            return self._extract(images, paths)
+            return self._extract(images, paths, n_layer=n_layer)
 
-    def context_features(self, images, paths):
-        z = self._extract(images, paths)
+    def context_features(self, images, paths, n_layer=3):
+        z = self._extract(images, paths, n_layer=n_layer)
         p = self.predictor(self.dropout(z))
         return z, p
 
@@ -77,13 +77,13 @@ class VisionModule(nn.Module):
                 p.requires_grad = False
         return enc, num_patches, embed_dim, processor, projector
 
-    def _extract(self, imgs: torch.Tensor, paths: List[str]):
+    def _extract(self, imgs: torch.Tensor, paths: List[str], n_layer: int = 3):
         if self.model_name == "dinov2":
-            h = self.encoder.get_intermediate_layers(imgs, n=3, return_class_token=False)[0] # the thrid last block
+            h = self.encoder.get_intermediate_layers(imgs, n=n_layer, return_class_token=False)[0] # the thrid last block
         elif self.model_name == "dinov3":
-            h = self.encoder.get_intermediate_layers(imgs, n=3, return_class_token=False)[0] 
+            h = self.encoder.get_intermediate_layers(imgs, n=n_layer, return_class_token=False)[0] 
         elif self.model_name == "dino":
-            h = self.encoder.get_intermediate_layers(imgs, n=3)[0][:,1:,:]
+            h = self.encoder.get_intermediate_layers(imgs, n=n_layer)[0][:,1:,:]
         elif self.model_name == "siglip":
             feats = [self.encoder(**self.processor(Image.open(p).convert("RGB"), return_tensors="pt").to(imgs.device)).last_hidden_state for p in paths]
             h = torch.cat(feats, dim=0)

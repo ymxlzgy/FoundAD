@@ -35,6 +35,7 @@ class Trainer:
         self.model = VisionModule(
             mcfg["model"], mcfg["pred_depth"], mcfg["pred_emb_dim"], if_pe=mcfg.get("if_pred_pe", True)
         )
+        self.n_layer = args["meta"].get("n_layer", 3) # for dinov2 and dinov3
         self.model.predictor.requires_grad_(True)
         if self.model.projector:
             self.model.projector.requires_grad_(True)
@@ -63,10 +64,16 @@ class Trainer:
         from src.helper import init_opt
 
         ocfg = args["optimization"]
-        self.optimizer, self.scaler = init_opt(
+        self.optimizer, self.scheduler, self.scaler = init_opt(
             predictor=self.model.predictor,
             wd=float(ocfg["weight_decay"]),
             lr=ocfg["lr"],
+            lr_config=ocfg.get("lr_config", "const"),
+            max_epoch=ocfg["epochs"],                         # for cosine_warmup
+            min_lr=ocfg.get("min_lr", 1e-6),                  # for cosine_warmup
+            warmup_epoch=ocfg.get("warmup_epoch", 5),         # for cosine_warmup
+            step_size=ocfg.get("step_size", 300),             # for step
+            gamma=ocfg.get("gamma", 0.1),                     # for step
         )
         self.epochs = ocfg["epochs"]
         self.use_bf16 = mcfg["use_bfloat16"]
@@ -105,9 +112,9 @@ class Trainer:
                 def _step():
                     with autocast(dtype=torch.bfloat16, enabled=self.use_bf16):
                         if np.random.rand() < 0.5:
-                            h = self.model.target_features(imgs, paths); _, p = self.model.context_features(imgs, paths)
+                            h = self.model.target_features(imgs, paths, n_layer=self.n_layer); _, p = self.model.context_features(imgs, paths, n_layer=self.n_layer)
                         else:
-                            h = self.model.target_features(imgs, paths); _, p = self.model.context_features(imgs_abn, paths)
+                            h = self.model.target_features(imgs, paths, n_layer=self.n_layer); _, p = self.model.context_features(imgs_abn, paths, n_layer=self.n_layer)
                         return self._loss_fn(h, p)
                 (loss,), t = gpu_timer(lambda: [_step()])
                 if self.use_bf16: self.scaler.scale(loss).backward(); self.scaler.step(self.optimizer); self.scaler.update()
@@ -120,7 +127,14 @@ class Trainer:
                     logger.info("[E %d I %d] loss %.3f (avg %.3f) mem %.2fMB (%.1fms)", ep+1, itr, loss.item(), loss_m.avg, torch.cuda.max_memory_allocated()/1024**2, time_m.avg)
                     if grad_stats:
                         logger.info("    grad: [%.2e %.2e] (%.2e %.2e)", grad_stats.first_layer, grad_stats.last_layer, grad_stats.min, grad_stats.max)
-            logger.info("Epoch %d complete. Avg loss %.3f", ep+1, loss_m.avg)
+            logger.info(
+                "Epoch %d complete. Avg loss %.3f, lr %.6f",
+                ep + 1,
+                loss_m.avg,
+                self.optimizer.param_groups[0]['lr']
+            )
+            if self.scheduler is not None:
+                self.scheduler.step()
 
 def main(args: Dict[str, Any]) -> None:
     if args is None:
