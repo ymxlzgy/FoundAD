@@ -54,7 +54,7 @@ class Trainer:
             use_color_jitter=dcfg.get("use_color_jitter",False),
             use_gray=dcfg.get("use_gray",False),
             use_blur=dcfg.get("use_blur",False),
-            use_random_erasing=dcfg.get("use_random_erasing",False)
+            # use_random_erasing=dcfg.get("use_random_erasing",False)
         )
         self.cutpaste = CutPasteUnion(colorJitter=0.5)
         self.batch_size = dcfg["batch_size"]
