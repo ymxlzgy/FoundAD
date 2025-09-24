@@ -1,8 +1,8 @@
+import os
 import logging
 import math
 from pathlib import Path
 from typing import Any, Dict, List
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -17,7 +17,7 @@ from src.utils.metrics import (
 )
 from src.helper import save_segmentation_grid
 from src.utils.logging import CSVLogger
-from src.ADJEPA import VisionModule          
+from src.foundad import VisionModule          
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger("evaluator")
@@ -44,9 +44,16 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
 
     crop = cfg["meta"]["crop_size"]
     K = cfg["testing"]["K_top"]
-    classnames = cfg["data"]["classnames"]
-    dataset_name = cfg["data"].get("dataset", "mvtec")
 
+    dataset_name = cfg["data"].get("dataset", "mvtec")
+    if dataset_name == 'mvtec':
+        classnames = cfg["data"]["mvtec_classnames"] 
+    elif dataset_name == 'visa':
+        classnames = cfg["data"]["visa_classnames"]
+    else:
+        raise NotImplementedError
+    
+    os.makedirs(Path(cfg["logging"]["folder"]), exist_ok=True)
     csv_path = Path(cfg["logging"]["folder"]) / f"{cfg['logging']['write_tag']}_eval.csv"
     csv_logger = CSVLogger(
         csv_path,
@@ -63,12 +70,14 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     for cls in classnames:
         _, loader, _ = build_dataloader(
             mode="test",
-            root=cfg["data"]["img_path"],
+            root=cfg["data"]["test_root"],
             batch_size=1,
             classname=cls,
             resize=crop,
             datasetname=dataset_name,
         )
+
+        print(f"Evaluating {cls}...")
 
         patch_scores, labels = [], []
         pix_buf, img_buf, mask_buf, name_buf = [], [], [], []
@@ -120,8 +129,9 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     csv_logger.log(ckpt.name, "Mean", np.mean(inst_auc), np.mean(inst_aupr),
                    np.mean(pix_auc), np.mean(pro_auc))
 
+
 def main(args: Dict[str, Any]) -> None:
-    ckpt = Path(args["checkpoint_path"])
+    ckpt = Path(args["ckpt_path"])
     _evaluate_single_ckpt(ckpt, args)
     logger.info("Finished. Metrics appended to CSV.")
 

@@ -13,7 +13,7 @@ from torch.cuda.amp import autocast, GradScaler
 from src.utils.logging import CSVLogger, gpu_timer, grad_logger, AverageMeter
 from src.datasets.dataset import build_dataloader
 from src.utils.synthesis import CutPasteUnion
-from src.ADJEPA import VisionModule
+from src.foundad import VisionModule
 
 _GLOBAL_SEED = 0
 random.seed(42); np.random.seed(0); torch.manual_seed(0)
@@ -30,18 +30,6 @@ class Trainer:
         if torch.cuda.is_available():
             torch.cuda.set_device(self.device)
 
-        # ---------- data ----------
-        dcfg = args["data"]
-        _, self.loader, self.sampler = build_dataloader(
-            mode="train",
-            root=dcfg["root_path"],
-            batch_size=dcfg["batch_size"],
-            pin_mem=dcfg["pin_mem"],
-            resize=dcfg["crop_size"],
-        )
-        self.cutpaste = CutPasteUnion(colorJitter=0.5)
-        self.batch_size = dcfg["batch_size"]
-
         # ---------- model ----------
         mcfg = args["meta"]
         self.model = VisionModule(
@@ -50,6 +38,18 @@ class Trainer:
         self.model.predictor.requires_grad_(True)
         if self.model.projector:
             self.model.projector.requires_grad_(True)
+
+        # ---------- data ----------
+        dcfg = args["data"]
+        _, self.loader, self.sampler = build_dataloader(
+            mode="train",
+            root=dcfg["train_root"],
+            batch_size=dcfg["batch_size"],
+            pin_mem=dcfg["pin_mem"],
+            resize=mcfg["crop_size"],
+        )
+        self.cutpaste = CutPasteUnion(colorJitter=0.5)
+        self.batch_size = dcfg["batch_size"]
 
         # ---------- optimization ----------
         from src.helper import init_opt

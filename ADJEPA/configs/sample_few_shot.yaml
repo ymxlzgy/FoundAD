@@ -1,7 +1,0 @@
-source: /media/ymxlzgy/Data21/xinyan/mvtec
-
-target: /media/ymxlzgy/Data21/xinyan/mvtec_few_shot
-
-num_samples: 1
-
-rename_img: false

@@ -1,0 +1,56 @@
+# configs/xxx.yaml
+defaults:
+  - _self_
+  - app: train_dinov3 # merge/extend on top of app: default
+
+# train / AD
+mode: train
+
+data:
+  batch_size: 8
+  num_workers: 0
+  pin_mem: true
+  dataset: mvtec 
+  train_root: /path/to/fewshot-folder
+  test_root: /path/to/dataset
+  mvtec_classnames:                            
+    - bottle
+    - cable
+    - capsule
+    - carpet
+    - grid
+    - hazelnut
+    - leather
+    - metal_nut
+    - pill
+    - screw
+    - tile
+    - toothbrush
+    - transistor
+    - wood
+    - zipper
+
+optimization:
+  epochs: 2000
+  lr: 0.005
+  weight_decay: 1e-4
+
+testing:
+  K_top: 10           
+  expect_fpr: 0.3     
+  max_steps: 200      
+  segmentation_vis: True
+
+devices: [cuda:0]
+
+dist:
+  master_addr: localhost
+  master_port: 40112
+  backend: nccl
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job:
+    chdir: false

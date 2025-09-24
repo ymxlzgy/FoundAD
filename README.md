@@ -29,7 +29,7 @@ ADJEPA supports the following anomaly-detection benchmarks:
 | Dataset | Preferred download |
 |---------|--------------------|
 | **MVTec AD** | Official site: <https://www.mvtec.com/company/research/datasets/mvtec-ad> |
-| **VISA** | : we recommend to use the structured dataset of RealNet: <https://github.com/cnulab/RealNet> |
+| **VisA** | : we recommend to use the structured dataset of RealNet: <https://github.com/cnulab/RealNet> |
 
 ---
 
@@ -40,29 +40,26 @@ ADJEPA supports the following anomaly-detection benchmarks:
 Create a **few-shot** subset with `sample.py`:
 
 ```bash
-python ADJEPA/src/sample.py  --config ADJEPA/configs/sample_few_shot.yaml
+python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/media/ymxlzgy/Data21/xinyan/visa_tmp num_samples=2
 ```
+`source` is the dataset folder. `target` is the folder of few-shot samples.
 
 ### Model Training
 
-Train on **GPU 0** using `ADJEPA/configs/train.yaml`:
+Train:
 
 ```bash
-python ADJEPA/main.py \
-    --fname ADJEPA/configs/train.yaml \
-    --mode train
+python foundad/main.py mode=train data.dataset=mvtec data.batch_size=8 data.train_root=/media/ymxlzgy/Data21/xinyan/mvtec_1shot app=train_dinov2
 ```
-
+`data.dataset` is mvtec or visa. `data.train_root` is the folder of few-shot samples. `app` is train_dinov2 or train_dinov3 under configs/app/.
 ### Anomaly Detection / Inference
 
 After training, run inference:
 
 ```bash
-python ADJEPA/main.py \
-    --fname ADJEPA/configs/test.yaml \
-    --mode AD
+python foundad/main.py mode=AD data.dataset=mvtec data.batch_size=8 data.test_root=/media/ymxlzgy/Data21/xinyan/mvtec data.dataset=mvtec app=test_dinov3 app.ckpt_step=1950
 ```
-
+ `data.test_root` is the dataset folder. `app` is test_dinov2 or test_dinov3 under configs/app/.
 
 
 ---
