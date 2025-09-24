@@ -28,6 +28,7 @@ def _build_model(meta: Dict[str, Any]) -> VisionModule:
         model_name=meta["model"],
         pred_depth=meta["pred_depth"],
         pred_emb_dim=meta["pred_emb_dim"],
+        if_pe=meta.get("if_pred_pe", True),
     ).eval()
 
 @torch.inference_mode()
