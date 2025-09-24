@@ -10,8 +10,10 @@ data:
   batch_size: 8
   num_workers: 0
   pin_mem: true
-  dataset: mvtec 
-  train_root: /path/to/fewshot-folder
+  dataset: mvtec
+  data_name: fewshot-folder-name
+  data_path: /path/to/fewshot-folder
+  train_root: ${data.data_path}/${data.data_name}
   test_root: /path/to/dataset
   mvtec_classnames:                            
     - bottle
@@ -30,13 +32,28 @@ data:
     - wood
     - zipper
 
+  visa_classnames:                            
+    - candle
+    - capsules
+    - cashew
+    - chewinggum
+    - fryum
+    - macaroni1
+    - macaroni2
+    - pcb1
+    - pcb2
+    - pcb3
+    - pcb4
+    - pipe_fryum
+
 optimization:
   epochs: 2000
   lr: 0.005
   weight_decay: 1e-4
 
 testing:
-  K_top: 10           
+  K_top_mvtec: 10    
+  K_top_visa: 6         
   expect_fpr: 0.3     
   max_steps: 200      
   segmentation_vis: True
