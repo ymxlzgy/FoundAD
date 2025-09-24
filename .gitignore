@@ -108,7 +108,6 @@ wheels/
 
 # Large data dirs
 data/
-datasets/
 results/
 outputs/
 logs/
