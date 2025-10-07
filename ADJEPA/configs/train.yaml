@@ -1,0 +1,18 @@
+data:
+  batch_size: 8
+  crop_size: 518
+  num_workers: 0
+  pin_mem: true
+  root_path: path/images
+logging:
+  folder: path/to/save
+  write_tag: train
+meta:
+  model: 'dinov2'
+  pred_depth: 6
+  pred_emb_dim: 384
+  use_bfloat16: false
+optimization:
+  epochs: 2000
+  lr: 0.005
+  weight_decay: 1e-4

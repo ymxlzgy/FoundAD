@@ -1,0 +1,2 @@
+[console_scripts]
+adjepa = ADJEPA.main:main
