@@ -29,18 +29,20 @@ def _build_model(meta: Dict[str, Any]) -> VisionModule:
         pred_depth=meta["pred_depth"],
         pred_emb_dim=meta["pred_emb_dim"],
         if_pe=meta.get("if_pred_pe", True),
-    ).eval()
+    )
 
 @torch.inference_mode()
 def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model = _build_model(cfg["meta"]).to(device)
-    state = torch.load(ckpt, map_location=device)
+    model = _build_model(cfg["meta"])
+    state = torch.load(ckpt, map_location="cpu")
     model.predictor.load_state_dict(state["predictor"])
     if model.projector is not None:
         model.projector.load_state_dict(state["projector"])
+    model.to(device)
+    model.eval()
 
     crop = cfg["meta"]["crop_size"]
 
