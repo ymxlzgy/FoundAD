@@ -1,11 +1,12 @@
 meta:
-  crop_size: 518       
-  model: 'dinov2'  
+  crop_size: 512       
+  model: 'dinov3'  
   pred_depth: 6            
   pred_emb_dim: 384        
-  use_bfloat16: false      
+  use_bfloat16: false
+  if_pred_pe: false    
 
-checkpoint_path: 'path/ckpt'
+checkpoint_path: 'logs/dinov3/train-step1950.pth.tar'
 
 data:
   img_path: '/media/ymxlzgy/Data21/xinyan/mvtec'
@@ -28,7 +29,7 @@ data:
     - zipper
 
 logging:
-  folder: 'logs/dinov2/eval'     
+  folder: 'logs/dinov3/eval'     
   write_tag: AD              
 
 testing:

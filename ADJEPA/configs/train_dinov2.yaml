@@ -5,7 +5,7 @@ data:
   pin_mem: true
   root_path: /media/ymxlzgy/Data21/xinyan/mvtec_1shot
 logging:
-  folder: logs
+  folder: logs/dinov2
   write_tag: train
 meta:
   model: 'dinov2'

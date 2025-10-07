@@ -471,8 +471,7 @@ class VisionTransformerPredictor(nn.Module):
         B = x.size(0)
 
         x = self.predictor_embed(x)
-        print(x.shape)
-        
+
         if self.if_pe:
             x_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)
             print(x_pos_embed.shape)

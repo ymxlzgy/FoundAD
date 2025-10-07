@@ -29,7 +29,7 @@ class VisionModule(nn.Module):
         self.model_name = model_name
 
         self.predictor = vit.__dict__["vit_predictor"](num_patches=self.num_patches, embed_dim=self.embed_dim,
-                                                         predictor_embed_dim=pred_emb_dim, depth=pred_depth,if_pe=if_pe)
+                                                         predictor_embed_dim=pred_emb_dim, depth=pred_depth, if_pe=if_pe)
         self._init_predictor(self.predictor)
         self.dropout = nn.Dropout(0.2)
         if use_cuda and torch.cuda.is_available():
@@ -53,7 +53,8 @@ class VisionModule(nn.Module):
         if model == "dinov2":
             enc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14").eval(); num_patches, embed_dim = enc.patch_embed.num_patches, enc.embed_dim
         elif model == "dinov3":
-            enc = torch.hub.load("facebookresearch/dinov3", 'dinov3_vitb16', weights='https://dinov3.llamameta.net/dinov3_vitb16/dinov3_vitb16_pretrain_lvd1689m-73cec8be.pth?Policy=eyJTdGF0ZW1lbnQiOlt7InVuaXF1ZV9oYXNoIjoicjdweHhiNDNjaG51cmNpODdqcDVrOG5mIiwiUmVzb3VyY2UiOiJodHRwczpcL1wvZGlub3YzLmxsYW1hbWV0YS5uZXRcLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTU0MzcxMzh9fX1dfQ__&Signature=FKi6FewJE1uh80XjrqFrZzNkwnwvhPaAMXqEhO5F9gcBnX4j-lN2ejRIo2Pfj7ccGUyb2he19F8J43RGeA0bHuUKK%7EDjMK-y6tTab3r8HMxGeYtqSYFw5DGt1PnU4rPvRDdSgXgjKD%7E02pW04WtTSPyGmXsV6cXHM1rsNzryA%7EOP1mXdC5h93PsfplRJjkxVJhRrIEKGmQS5CDnUZqd%7Equjx3ENLW%7Ej2ybAXYuaoTkXC1pEwLVaZ2GdUevStXFV9h3b7D-dsvqWhuE-46dOCPKtyfTGaCE3h8Sj%7E7wBZ2NQMBU3EX9fI9emOi81FSOwK5BbQqd7AQ73QqKMGm9JzLQ__&Key-Pair-Id=K15QRJLYKIFSLZ&Download-Request-ID=1110542151137970').eval()
+            # enc = torch.hub.load("facebookresearch/dinov3", 'dinov3_vitb16', weights='https://dinov3.llamameta.net/dinov3_vitb16/dinov3_vitb16_pretrain_lvd1689m-73cec8be.pth?Policy=eyJTdGF0ZW1lbnQiOlt7InVuaXF1ZV9oYXNoIjoicjdweHhiNDNjaG51cmNpODdqcDVrOG5mIiwiUmVzb3VyY2UiOiJodHRwczpcL1wvZGlub3YzLmxsYW1hbWV0YS5uZXRcLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTU0MzcxMzh9fX1dfQ__&Signature=FKi6FewJE1uh80XjrqFrZzNkwnwvhPaAMXqEhO5F9gcBnX4j-lN2ejRIo2Pfj7ccGUyb2he19F8J43RGeA0bHuUKK%7EDjMK-y6tTab3r8HMxGeYtqSYFw5DGt1PnU4rPvRDdSgXgjKD%7E02pW04WtTSPyGmXsV6cXHM1rsNzryA%7EOP1mXdC5h93PsfplRJjkxVJhRrIEKGmQS5CDnUZqd%7Equjx3ENLW%7Ej2ybAXYuaoTkXC1pEwLVaZ2GdUevStXFV9h3b7D-dsvqWhuE-46dOCPKtyfTGaCE3h8Sj%7E7wBZ2NQMBU3EX9fI9emOi81FSOwK5BbQqd7AQ73QqKMGm9JzLQ__&Key-Pair-Id=K15QRJLYKIFSLZ&Download-Request-ID=1110542151137970').eval()
+            enc = torch.hub.load("facebookresearch/dinov3", 'dinov3_vitb16', source="github").eval()
             num_patches, embed_dim = enc.patch_embed.num_patches, enc.embed_dim
         elif model == "dino":
             enc = torch.hub.load("facebookresearch/dino:main", "dino_vitb16").eval(); num_patches, embed_dim = 1024, enc.embed_dim
