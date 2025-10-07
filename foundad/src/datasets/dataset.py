@@ -3,11 +3,22 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader, distributed
 from torchvision import transforms
+from torchvision.transforms import functional as TF
+import random
 import torchvision
 import PIL
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
+class RandomRotate90or270:
+    def __init__(self, p=0.3):
+        self.p = p
+
+    def __call__(self, img):
+        if random.random() < self.p:
+            angle = random.choice([90, 270])
+            return TF.rotate(img, angle)
+        return img
 
 def build_base_transform(resize: int = 518):
     return [
@@ -24,38 +35,78 @@ def build_train_transform(
     use_color_jitter=False,
     use_gray=False,
     use_blur=False,
-    use_random_erasing=False,
+    # use_random_erasing=False,
 ):
     ops = []
 
     if use_hflip:
-        ops.append(transforms.RandomHorizontalFlip(p=0.5))
+        ops.append(transforms.RandomHorizontalFlip(p=0.2))
 
     if use_vflip:
-        ops.append(transforms.RandomVerticalFlip(p=0.5))
+        ops.append(transforms.RandomVerticalFlip(p=0.2))
 
     if use_rotate90:
-        ops.append(transforms.RandomChoice([
-            transforms.RandomRotation([90]),
-            transforms.RandomRotation([270]),
-        ]))
+        ops.append(RandomRotate90or270(p=0.2))
 
     if use_color_jitter:
-        ops.append(transforms.ColorJitter(0.3,0.3,0.3,0.05))
+        ops.append(transforms.RandomApply(
+                [transforms.ColorJitter(0.3,0.3,0.3,0.05)],
+                p=0.2
+            )
+        )
 
     if use_gray:
         ops.append(transforms.RandomGrayscale(p=0.1))
 
     if use_blur:
-        ops.append(transforms.GaussianBlur(
-            kernel_size=23 if resize >= 384 else 11, sigma=(0.1, 2.0))
+        ops.append(transforms.RandomApply(
+                [transforms.GaussianBlur(kernel_size=23 if resize >= 384 else 11, sigma=(0.1, 2.0))],
+                p=0.2
+            )
         )
 
     ops.extend(build_base_transform(resize))
 
-    if use_random_erasing:
-        ops.append(transforms.RandomErasing(p=0.25, scale=(0.02,0.15), ratio=(0.3,3.3)))
+    # if use_random_erasing:
+    #     ops.append(transforms.RandomErasing(p=0.25, scale=(0.02,0.15), ratio=(0.3,3.3)))
 
+    return transforms.Compose(ops)
+
+def build_train_transform_new(
+    resize=518,
+    use_hflip=False,
+    use_vflip=False,
+    use_rotate90=False,
+    use_color_jitter=False,
+    use_gray=False,
+    use_blur=False,
+    p_any=0.3,  # 全局：仅以 p_any 的概率做“一种”增强
+):
+    # 先收集可用的候选增强（每个都是“会改变图像”的操作）
+    candidates = []
+    if use_hflip:      
+        candidates.append(transforms.RandomHorizontalFlip(p=1.0))
+    if use_vflip:      
+        candidates.append(transforms.RandomVerticalFlip(p=1.0))
+    if use_rotate90:   
+        candidates.append(RandomRotate90or270(p=1.0))
+    if use_color_jitter:
+        candidates.append(transforms.ColorJitter(0.3,0.3,0.3,0.05))
+    if use_gray:       
+        candidates.append(transforms.Lambda(lambda im: im.convert("L").convert("RGB")))
+    if use_blur:
+        candidates.append(transforms.GaussianBlur(kernel_size=23 if resize>=384 else 11, sigma=(0.1,2.0)))
+
+    ops = []
+    if candidates:
+        ops.append(
+            transforms.RandomApply(
+                [transforms.RandomChoice(candidates)],
+                p=p_any
+            )
+        )
+
+    ops.extend(build_base_transform(resize))
     return transforms.Compose(ops)
 
 class TrainDataset(torchvision.datasets.ImageFolder):
@@ -64,7 +115,7 @@ class TrainDataset(torchvision.datasets.ImageFolder):
         super().__init__(os.path.join(root, 'train'))
         self.resize = resize
         self.root = os.path.join(root, "train")
-        self.transform = build_train_transform(
+        self.transform = build_train_transform_new(
             self.resize,
             use_hflip=kwargs.get("use_hflip",False),
             use_vflip=kwargs.get("use_vflip",False),
@@ -72,7 +123,6 @@ class TrainDataset(torchvision.datasets.ImageFolder):
             use_color_jitter=kwargs.get("use_color_jitter",False),
             use_gray=kwargs.get("use_gray",False),
             use_blur=kwargs.get("use_blur",False),
-            use_random_erasing=kwargs.get("use_random_erasing",False),
         )
         self.samples = [(path, self.classes[target]) for (path, target) in self.samples]
         print(f"Totally {len(self.samples)} will be trained..")

@@ -54,7 +54,6 @@ data:
   use_color_jitter: True
   use_gray: True
   use_blur: True
-  use_random_erasing: True
 
 optimization:
   epochs: 2000
