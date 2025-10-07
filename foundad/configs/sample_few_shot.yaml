@@ -1,0 +1,20 @@
+source: /path/to/dataset
+target: /path/to/few_shot_folder
+num_samples: 1
+
+# Candidate sub‑folders with clean images; can be given multiple times
+train_subpaths: ["train/good", "train/ok"]
+allowed_exts: [".png", ".jpg", ".jpeg"]
+
+rename_images: false
+
+seed: 42
+
+user_config: ""
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job:
+    chdir: false

@@ -1,0 +1,16 @@
+# @package app
+meta:      
+  model: 'dinov2'  
+  crop_size: 518 
+  pred_depth: 6            
+  pred_emb_dim: 384        
+  use_bfloat16: false      
+
+dataset_name: ${data.dataset}
+
+ckpt_step: 1950
+ckpt_path: 'logs/${app.meta.model}/${app.dataset_name}/train-step${app.ckpt_step}.pth.tar'                       
+
+logging:
+  folder: 'logs/${app.meta.model}/${app.dataset_name}/eval/${app.ckpt_step}'     
+  write_tag: AD  

@@ -1,0 +1,14 @@
+# @package app
+meta:
+  model: 'dinov3'
+  crop_size: 512
+  pred_depth: 6
+  pred_emb_dim: 384
+  use_bfloat16: false
+  if_pred_pe: false
+
+dataset_name: ${data.dataset}
+
+logging:
+  folder: logs/${app.dataset_name}/${app.meta.model}
+  write_tag: train
