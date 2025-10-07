@@ -41,6 +41,7 @@ class Trainer:
 
         # ---------- data ----------
         dcfg = args["data"]
+        assert dcfg["dataset"] in dcfg["data_name"] # check if the dataset aligns with the few-shot folder
         _, self.loader, self.sampler = build_dataloader(
             mode="train",
             root=dcfg["train_root"],

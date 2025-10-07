@@ -6,7 +6,7 @@ meta:
   pred_emb_dim: 384
   use_bfloat16: false
 
-dataset_name: ${data.dataset}
+dataset_name: ${data.data_name}
 
 logging:
   folder: logs/${app.dataset_name}/${app.meta.model}

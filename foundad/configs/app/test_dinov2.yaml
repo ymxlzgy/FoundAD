@@ -6,7 +6,7 @@ meta:
   pred_emb_dim: 384        
   use_bfloat16: false      
 
-dataset_name: ${data.dataset}
+dataset_name: ${data.data_name}
 
 ckpt_step: 1950
 ckpt_path: 'logs/${app.meta.model}/${app.dataset_name}/train-step${app.ckpt_step}.pth.tar'                       

@@ -33,7 +33,7 @@ def _build_model(meta: Dict[str, Any]) -> VisionModule:
 
 @torch.inference_mode()
 def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
-    logger.info("Evaluating %s", ckpt.name)
+    
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = _build_model(cfg["meta"]).to(device)
@@ -43,15 +43,19 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
         model.projector.load_state_dict(state["projector"])
 
     crop = cfg["meta"]["crop_size"]
-    K = cfg["testing"]["K_top"]
 
     dataset_name = cfg["data"].get("dataset", "mvtec")
     if dataset_name == 'mvtec':
         classnames = cfg["data"]["mvtec_classnames"] 
+        K = cfg["testing"]["K_top_mvtec"]
     elif dataset_name == 'visa':
         classnames = cfg["data"]["visa_classnames"]
+        K = cfg["testing"]["K_top_visa"]
     else:
         raise NotImplementedError
+    assert dataset_name in cfg["data"]["test_root"] # check if eval on the same dataset the ckpt trained on
+    
+    logger.info(f"Evaluating {ckpt.name} on {dataset_name}")
     
     os.makedirs(Path(cfg["logging"]["folder"]), exist_ok=True)
     csv_path = Path(cfg["logging"]["folder"]) / f"{cfg['logging']['write_tag']}_eval.csv"
