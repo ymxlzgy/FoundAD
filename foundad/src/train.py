@@ -33,12 +33,13 @@ class Trainer:
         # ---------- model ----------
         mcfg = args["meta"]
         self.model = VisionModule(
-            mcfg["model"], mcfg["pred_depth"], mcfg["pred_emb_dim"], if_pe=mcfg.get("if_pred_pe", True)
+            mcfg["model"], mcfg["pred_depth"], mcfg["pred_emb_dim"], if_pe=mcfg.get("if_pred_pe", True), feat_normed=mcfg.get("feat_normed", False),
         )
         self.n_layer = args["meta"].get("n_layer", 3) # for dinov2 and dinov3
         self.model.predictor.requires_grad_(True)
         if self.model.projector:
             self.model.projector.requires_grad_(True)
+        self.loss_mode = args["meta"].get("loss_mode", "l2") # l2 or smooth_l1
 
         # ---------- data ----------
         dcfg = args["data"]
@@ -94,7 +95,13 @@ class Trainer:
             ("%d", "time (ms)"),
         )
 
-    def _loss_fn(self, h, p): return F.mse_loss(h.flatten(0,1), p.flatten(0,1), reduction="mean")
+    def _loss_fn(self, h, p) -> torch.Tensor:
+        if self.loss_mode == 'l2':
+            return F.mse_loss(h.flatten(0,1), p.flatten(0,1), reduction="mean")
+        elif self.loss_mode == 'smooth_l1':
+            return F.smooth_l1_loss(h.flatten(0,1), p.flatten(0,1), reduction="mean")
+        else:
+            raise NotImplementedError(f"Loss mode {self.loss_mode} not implemented")
 
     def _save_ckpt(self, ep, step=None):
         name = f"{self.tag}-step{step}.pth.tar" if step else f"{self.tag}-ep{ep}.pth.tar"
@@ -115,7 +122,7 @@ class Trainer:
                             h = self.model.target_features(imgs, paths, n_layer=self.n_layer); _, p = self.model.context_features(imgs, paths, n_layer=self.n_layer)
                         else:
                             h = self.model.target_features(imgs, paths, n_layer=self.n_layer); _, p = self.model.context_features(imgs_abn, paths, n_layer=self.n_layer)
-                        return self._loss_fn(h, p)
+                        return self._loss_fn(h, p,)
                 (loss,), t = gpu_timer(lambda: [_step()])
                 if self.use_bf16: self.scaler.scale(loss).backward(); self.scaler.step(self.optimizer); self.scaler.update()
                 else: loss.backward(); self.optimizer.step()

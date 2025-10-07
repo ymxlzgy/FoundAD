@@ -29,6 +29,7 @@ def _build_model(meta: Dict[str, Any]) -> VisionModule:
         pred_depth=meta["pred_depth"],
         pred_emb_dim=meta["pred_emb_dim"],
         if_pe=meta.get("if_pred_pe", True),
+        feat_normed=meta.get("feat_normed", False),
     )
 
 @torch.inference_mode()
@@ -46,6 +47,8 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
 
     crop = cfg["meta"]["crop_size"]
     n_layer = cfg["meta"].get("n_layer", 3)
+
+    error = cfg["meta"].get("loss_mode", "l2")
 
     dataset_name = cfg["data"].get("dataset", "mvtec")
     if dataset_name == 'mvtec':
@@ -96,12 +99,17 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
 
             enc = model.target_features(img, paths, n_layer=n_layer)
             pred = model.predict(enc)
-            l2 = F.mse_loss(enc, pred, reduction="none").mean(dim=2)      
+            if error == 'l2':
+                l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
+            elif error == 'smooth_l1':
+                l = F.smooth_l1_loss(enc, pred, reduction="none").mean(dim=2)
+            else:
+                raise NotImplementedError(f"Loss mode {error} not implemented")
 
-            topk = torch.topk(l2, K, dim=1).values.mean(dim=1)
+            topk = torch.topk(l, K, dim=1).values.mean(dim=1)
             patch_scores.extend(topk.cpu())
-            h = w = int(math.sqrt(l2.size(1)))
-            pix = F.interpolate(l2.view(-1,1,h,w), size=img.shape[2:], mode="bilinear", align_corners=False)
+            h = w = int(math.sqrt(l.size(1)))
+            pix = F.interpolate(l.view(-1,1,h,w), size=img.shape[2:], mode="bilinear", align_corners=False)
             pix_buf.append(pix.squeeze(1).cpu()); img_buf.append(img.cpu()); mask_buf.append(mask.cpu())
 
         p_np = torch.tensor(patch_scores).numpy()

@@ -7,6 +7,8 @@ meta:
   use_bfloat16: false
   if_pred_pe: false
   n_layer: 3
+  feat_normed: false
+  loss_mode: 'l2'  # l2 or smooth_l1
 
 logging:
   folder: logs/${data.data_name}/${app.meta.model}${oc.select:diy_name,""}

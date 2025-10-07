@@ -19,36 +19,6 @@ from src.AD import main as AD
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-# def process_main(rank, fname, world_size, devices, mode):
-#     os.environ['CUDA_VISIBLE_DEVICES'] = str(devices[rank].split(':')[-1])
-#     logging.basicConfig()
-#     logger = logging.getLogger()
-#     if rank == 0:
-#         logger.setLevel(logging.INFO)
-#     else:
-#         logger.setLevel(logging.ERROR)
-
-#     logger.info(f'called-params {fname}')
-
-#     # -- load script params
-#     params = None
-#     with open(fname, 'r') as y_file:
-#         params = yaml.load(y_file, Loader=yaml.FullLoader)
-#         logger.info('loaded params...')
-#         pp = pprint.PrettyPrinter(indent=4)
-#         pp.pprint(params)
-
-#     os.environ['MASTER_ADDR'] = 'localhost'
-#     os.environ['MASTER_PORT'] = str(40112)
-#     torch.distributed.init_process_group(
-#         backend='nccl',
-#         world_size=world_size,
-#         rank=rank)
-
-#     if mode == 'train':
-#         app_main_mvtec(args=params)
-#     elif mode =='AD':
-#         AD(args=params)
 
 def process_main(rank: int, cfg_dict: dict, world_size: int):
     """
