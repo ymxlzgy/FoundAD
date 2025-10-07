@@ -45,6 +45,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     model.eval()
 
     crop = cfg["meta"]["crop_size"]
+    n_layer = cfg["meta"].get("n_layer", 3)
 
     dataset_name = cfg["data"].get("dataset", "mvtec")
     if dataset_name == 'mvtec':
@@ -93,7 +94,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
             mask = batch["mask"].to(device, non_blocking=True)
             paths = batch["image_path"]; labels.extend(batch["is_anomaly"]); name_buf.extend(batch["image_name"])
 
-            enc = model.target_features(img, paths)
+            enc = model.target_features(img, paths, n_layer=n_layer)
             pred = model.predict(enc)
             l2 = F.mse_loss(enc, pred, reduction="none").mean(dim=2)      
 
