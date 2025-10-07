@@ -1,5 +1,5 @@
 
-# ADJEPA
+# FoundAD
 ---
 
 ## Table of Contents
@@ -14,7 +14,7 @@
 
 ## Environment Setup
 
-All Python dependencies are listed in **`requirements.txt`**. We recommend **Python ≥ 3.8**.
+All Python dependencies are listed in **`requirements.txt`**. We recommend **Python ≥ 3.10**.
 
 ```bash
 pip install -r requirements.txt
@@ -50,7 +50,6 @@ Train on **GPU 0** using `ADJEPA/configs/train.yaml`:
 ```bash
 python ADJEPA/main.py \
     --fname ADJEPA/configs/train.yaml \
-    --device cuda:0 \
     --mode train
 ```
 
@@ -61,7 +60,6 @@ After training, run inference:
 ```bash
 python ADJEPA/main.py \
     --fname ADJEPA/configs/test.yaml \
-    --device cuda:0 \
     --mode AD
 ```
 

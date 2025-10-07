@@ -45,7 +45,7 @@ class Trainer:
         # ---------- model ----------
         mcfg = args["meta"]
         self.model = VisionModule(
-            mcfg["model"], mcfg["pred_depth"], mcfg["pred_emb_dim"]
+            mcfg["model"], mcfg["pred_depth"], mcfg["pred_emb_dim"], if_pe=mcfg.get("if_pred_pe", True)
         )
         self.model.predictor.requires_grad_(True)
         if self.model.projector:

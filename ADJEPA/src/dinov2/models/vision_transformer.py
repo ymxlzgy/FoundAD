@@ -411,6 +411,7 @@ class VisionTransformerPredictor(nn.Module):
         depth=6,
         num_heads=12,
         mlp_ratio=4.0,
+        if_pe=True,
         qkv_bias=True,
         qk_scale=None,
         drop_rate=0.0,
@@ -425,12 +426,14 @@ class VisionTransformerPredictor(nn.Module):
         self.mask_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         # --
-        self.predictor_pos_embed = nn.Parameter(torch.zeros(1, num_patches, predictor_embed_dim),
-                                                requires_grad=False)
-        # predictor_pos_embed = get_2d_sincos_pos_embed(self.predictor_pos_embed.shape[-1],
-        #                                               int(num_patches**.5),
-        #                                               cls_token=False)
-        # self.predictor_pos_embed.data.copy_(torch.from_numpy(predictor_pos_embed).float().unsqueeze(0))
+        self.init_std = init_std
+        self.if_pe = if_pe
+        if self.if_pe:
+            self.predictor_pos_embed = nn.Parameter(torch.zeros(1, num_patches, predictor_embed_dim),
+                                                    requires_grad=False)
+            trunc_normal_(self.predictor_pos_embed, std=self.init_std)
+        else:
+            self.predictor_pos_embed = None
         # --
         self.predictor_blocks = nn.ModuleList([
             Block(
@@ -440,8 +443,6 @@ class VisionTransformerPredictor(nn.Module):
         self.predictor_norm = norm_layer(predictor_embed_dim)
         self.predictor_proj = nn.Linear(predictor_embed_dim, embed_dim, bias=True)
         # ------
-        self.init_std = init_std
-        trunc_normal_(self.predictor_pos_embed, std=self.init_std)
         self.apply(self._init_weights)
         self.fix_init_weight()
 
@@ -470,9 +471,12 @@ class VisionTransformerPredictor(nn.Module):
         B = x.size(0)
 
         x = self.predictor_embed(x)
-
-        x_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)
-        x += x_pos_embed
+        print(x.shape)
+        
+        if self.if_pe:
+            x_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)
+            print(x_pos_embed.shape)
+            x = x + x_pos_embed
 
         _, N_ctxt, D = x.shape
 
