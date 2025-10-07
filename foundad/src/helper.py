@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 import logging
 import sys
-
+import math
 import torch
 
 import numpy as np
@@ -53,7 +53,13 @@ def init_opt(
     predictor,
     wd=1e-4,
     lr=0.005,
+    lr_config='const',
     use_bfloat16=False,
+    max_epoch=2000,       # for cosine_warmup
+    min_lr=1e-6,          # for cosine_warmup
+    warmup_epoch=5,       # for cosine_warmup
+    step_size=300,         # for step
+    gamma=0.1,            # for step
 ):
     param_groups = [
         {
@@ -65,5 +71,34 @@ def init_opt(
 
     logger.info('Using AdamW')
     optimizer = torch.optim.AdamW(param_groups, lr=lr, weight_decay=wd)  
+
+    if lr_config == 'const':
+        logger.info(f'Constant lr, lr={lr}')
+        scheduler = None
+    elif lr_config == 'step':
+        logger.info(f'Step lr: size={step_size},gamma={gamma}')
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=step_size, gamma=gamma
+        )
+    elif lr_config == 'cosine':
+        logger.info(f'Consine Anneal lr, min_lr={min_lr}')
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=max_epoch, eta_min=min_lr
+        )
+    elif lr_config == 'cosine_warmup':
+        logger.info(f'Consine Warmup lr, warmup_epoch={warmup_epoch}, min_lr={min_lr}')
+        def lr_lambda(epoch):
+            if epoch < warmup_epoch:
+                # 0 → 1
+                return float(epoch + 1) / float(warmup_epoch)
+            # cosine
+            progress = (epoch - warmup_epoch) / float(max_epoch - warmup_epoch)
+            cosine = 0.5 * (1.0 + math.cos(math.pi * progress))  # [1 → 0]
+            return (min_lr / lr) + (1 - min_lr / lr) * cosine  # [1 → eta_min/lr]
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+    else:
+        raise ValueError(f"Unknown lr_config: {lr_config}")
+    
     scaler = torch.cuda.amp.GradScaler() if use_bfloat16 else None
-    return optimizer, scaler
+
+    return optimizer, scheduler, scaler
