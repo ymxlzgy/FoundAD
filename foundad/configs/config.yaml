@@ -49,8 +49,8 @@ data:
     - pipe_fryum
 
   use_hflip: True
-  use_vflip: False
-  use_rotate90: False
+  use_vflip: True
+  use_rotate90: True
   use_color_jitter: True
   use_gray: True
   use_blur: True
@@ -58,7 +58,7 @@ data:
 optimization:
   weight_decay: 1e-4
   epochs: 2000
-  lr: 0.005
+  lr: 0.001
   lr_config: const # const, cosine, step, cosine_warmup
   min_lr: 1e-4 # for cosine and cosine_warmup
   warmup_epoch: 100 # cosine_warmup
