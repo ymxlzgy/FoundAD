@@ -3,7 +3,7 @@ defaults:
   - _self_
   - app: train_dinov3 # merge/extend on top of app: default
 
-diy_name: ""
+diy_name: "_hflip_vflip_rotate90_jitter_gray_blur_staged"
 
 # train / AD
 mode: train
@@ -12,7 +12,7 @@ data:
   batch_size: 8
   num_workers: 0
   pin_mem: true
-  dataset: mvtec
+  dataset: dataset-name
   data_name: fewshot-folder-name
   data_path: /path/to/fewshot-folder
   train_root: ${data.data_path}/${data.data_name}

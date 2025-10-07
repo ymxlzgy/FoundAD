@@ -1,7 +1,7 @@
 # @package app
 
 model_name: dinov3
-ckpt_step: 1950
+ckpt_step: 2800
 
 logging:
   write_tag: AD               
