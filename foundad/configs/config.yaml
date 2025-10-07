@@ -1,7 +1,9 @@
-# configs/xxx.yaml
+# configs/config.yaml
 defaults:
   - _self_
   - app: train_dinov3 # merge/extend on top of app: default
+
+diy_name: ""
 
 # train / AD
 mode: train
@@ -45,6 +47,14 @@ data:
     - pcb3
     - pcb4
     - pipe_fryum
+
+  use_hflip: True
+  use_vflip: False
+  use_rotate90: False
+  use_color_jitter: True
+  use_gray: True
+  use_blur: True
+  use_random_erasing: True
 
 optimization:
   epochs: 2000
