@@ -71,13 +71,13 @@ def process_main(rank: int, cfg_dict: dict, world_size: int):
     dev_str = devices[rank]
     os.environ["CUDA_VISIBLE_DEVICES"] = str(dev_str.split(":")[-1])
 
-    model_params = cfg_dict.get("app", {}) # model config
+    params = cfg_dict.get("app", {}) # model config
 
-    model_params.update(cfg_dict)
+    params.update(cfg_dict)
 
-    logger.info("model params:")
+    logger.info("Params:")
     pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(model_params)
+    pp.pprint(params)
 
     # ---- DDP    
     os.environ["MASTER_ADDR"] = master_addr
@@ -88,18 +88,27 @@ def process_main(rank: int, cfg_dict: dict, world_size: int):
         rank=rank
     )
 
-    if rank==0:
-        log_dir = model_params["logging"]["folder"]
-        os.makedirs(log_dir, exist_ok=True)
-        params_save_path = os.path.join(log_dir, "params.yaml")
-        with open(params_save_path, "w") as f:
-            yaml.safe_dump(model_params, f, default_flow_style=False, sort_keys=False)
-        print(f"Config saved to {params_save_path}")
-
     if mode == "train":
-        app_main_mvtec(args=model_params)
+        if rank==0:
+            log_dir = params["logging"]["folder"]
+            os.makedirs(log_dir, exist_ok=True)
+            params_save_path = os.path.join(log_dir, "params.yaml")
+            with open(params_save_path, "w") as f:
+                yaml.safe_dump(params, f, default_flow_style=False, sort_keys=False)
+            print(f"Config saved to {params_save_path}")
+
+        app_main_mvtec(args=params)
     elif mode == "AD":
-        AD(args=model_params)
+        load_path = os.path.join('logs', cfg_dict['data']['data_name'], params.get('model_name','')+cfg_dict['diy_name'])
+        saved_path = os.path.join(load_path,"params.yaml")
+        if os.path.exists(saved_path):
+            with open(saved_path, "r") as f:
+                saved_params = yaml.safe_load(f)
+                assert cfg_dict['diy_name']==saved_params['diy_name']
+                params['meta'] = saved_params['meta']
+                params["ckpt_path"] = os.path.join(saved_params["logging"]["folder"],f"train-step{params['ckpt_step']}.pth.tar")
+                params["logging"]["folder"] = os.path.join(saved_params["logging"]["folder"],"eval")
+        AD(args=params)
     else:
         if rank == 0:
             logger.error(f"Unknown mode: {mode}")
