@@ -4,21 +4,21 @@ from setuptools import setup, find_packages
 root = Path(__file__).parent
 
 setup(
-    name="adjepa",
+    name="foundad",
     version="0.1.0",
-    description="ADJEPA",
+    description="foundad",
     long_description=(root / "README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         "torch>=2.1",
     ],
-    packages=find_packages(where="ADJEPA/src"),
-    package_dir={"": "ADJEPA/src"},
+    packages=find_packages(where="foundad/src"),
+    package_dir={"": "foundad/src"},
     package_data={"": ["*.yaml", "*.yml", "*.json"]},
     entry_points={
         "console_scripts": [
-            "adjepa = ADJEPA.main:main",
+            "foundad = foundad.main:main",
         ],
     },
     classifiers=[

@@ -3,7 +3,7 @@ defaults:
   - _self_
   - app: train_dinov3 # merge/extend on top of app: default
 
-diy_name: "_hflip_vflip_rotate90_jitter_gray_blur_staged"
+diy_name: "_pretrained"
 
 # train / AD
 mode: train
