@@ -55,7 +55,6 @@ class VisionModule(nn.Module):
         if model == "dinov2":
             enc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14").eval(); num_patches, embed_dim = enc.patch_embed.num_patches, enc.embed_dim
         elif model == "dinov3":
-            # enc = torch.hub.load("facebookresearch/dinov3", 'dinov3_vitb16', weights='https://dinov3.llamameta.net/dinov3_vitb16/dinov3_vitb16_pretrain_lvd1689m-73cec8be.pth?Policy=eyJTdGF0ZW1lbnQiOlt7InVuaXF1ZV9oYXNoIjoicjdweHhiNDNjaG51cmNpODdqcDVrOG5mIiwiUmVzb3VyY2UiOiJodHRwczpcL1wvZGlub3YzLmxsYW1hbWV0YS5uZXRcLyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTU0MzcxMzh9fX1dfQ__&Signature=FKi6FewJE1uh80XjrqFrZzNkwnwvhPaAMXqEhO5F9gcBnX4j-lN2ejRIo2Pfj7ccGUyb2he19F8J43RGeA0bHuUKK%7EDjMK-y6tTab3r8HMxGeYtqSYFw5DGt1PnU4rPvRDdSgXgjKD%7E02pW04WtTSPyGmXsV6cXHM1rsNzryA%7EOP1mXdC5h93PsfplRJjkxVJhRrIEKGmQS5CDnUZqd%7Equjx3ENLW%7Ej2ybAXYuaoTkXC1pEwLVaZ2GdUevStXFV9h3b7D-dsvqWhuE-46dOCPKtyfTGaCE3h8Sj%7E7wBZ2NQMBU3EX9fI9emOi81FSOwK5BbQqd7AQ73QqKMGm9JzLQ__&Key-Pair-Id=K15QRJLYKIFSLZ&Download-Request-ID=1110542151137970').eval()
             enc = torch.hub.load("facebookresearch/dinov3", 'dinov3_vitb16', source="github").eval()
             num_patches, embed_dim = enc.patch_embed.num_patches, enc.embed_dim
         elif model == "dino":
@@ -87,10 +86,24 @@ class VisionModule(nn.Module):
         elif self.model_name == "dino":
             h = self.encoder.get_intermediate_layers(imgs, n=n_layer)[0][:,1:,:]
         elif self.model_name == "siglip":
-            feats = [self.encoder(**self.processor(Image.open(p).convert("RGB"), return_tensors="pt").to(imgs.device)).last_hidden_state for p in paths]
-            h = torch.cat(feats, dim=0)
+            pil_list = [Image.open(p).convert("RGB") for p in paths]
+            proc = self.processor(images=pil_list, return_tensors="pt")
+            pixel_values = proc["pixel_values"].to(imgs.device)
+
+            with torch.no_grad():
+                out = self.encoder(pixel_values=pixel_values, output_hidden_states=True)
+                hs = out.hidden_states  # tuple: [embeddings, block1, ..., blockL]; len = L+1
+
+            L = len(hs) - 1  # number of transformer blocks
+            n = max(1, min(n_layer, L))
+            h = hs[-n][:, :, :]   # [B, 1024, 768] for 512/16 patches
+            # print(h.shape)
         elif self.model_name == "clip":
-            h = self.encoder(imgs).last_hidden_state[:,1:,:]
+            hs = self.encoder(pixel_values=imgs, output_hidden_states=True).hidden_states
+            L = len(hs) - 1  # number of transformer blocks
+            n = max(1, min(n_layer, L))
+            h = hs[-n][:, 1:, :]   # [B, 1024, 768] for 512/16 patches
+            # print(h.shape)
         elif self.model_name == "dinosiglip":
             feats = [self.encoder.generate(Image.open(p).convert("RGB"))[0] for p in paths]
             h = torch.cat(feats).view(imgs.size(0), 2176, -1).permute(0,2,1)

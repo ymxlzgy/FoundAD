@@ -60,6 +60,7 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
     else:
         raise NotImplementedError
     assert dataset_name in cfg["data"]["test_root"] # check if eval on the same dataset the ckpt trained on
+
     
     logger.info(f"Evaluating {ckpt.name} on {dataset_name}")
     
@@ -100,13 +101,6 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
             enc = model.target_features(img, paths, n_layer=n_layer)
             pred = model.predict(enc)
 
-            # if error == 'l2':
-            #     l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
-            # elif error == 'smooth_l1':
-            #     l = F.smooth_l1_loss(enc, pred, reduction="none").mean(dim=2)
-            # else:
-            #     raise NotImplementedError(f"Loss mode {error} not implemented")
-
             l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)
 
             topk = torch.topk(l, K, dim=1).values.mean(dim=1)
@@ -146,10 +140,105 @@ def _evaluate_single_ckpt(ckpt: Path, cfg: Dict[str, Any]) -> None:
                 np.mean(inst_auc), np.mean(inst_aupr), np.mean(pix_auc), np.mean(pro_auc))
     csv_logger.log(ckpt.name, "Mean", np.mean(inst_auc), np.mean(inst_aupr),
                    np.mean(pix_auc), np.mean(pro_auc))
+    
+
+@torch.inference_mode()
+def _demo(ckpt: Path, cfg: Dict[str, Any]) -> None:
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    model = _build_model(cfg["meta"])
+    state = torch.load(ckpt, map_location="cpu")
+    model.predictor.load_state_dict(state["predictor"])
+    if model.projector is not None:
+        model.projector.load_state_dict(state["projector"])
+    model.to(device)
+    model.eval()
+
+    crop = cfg["meta"]["crop_size"]
+    n_layer = cfg["meta"].get("n_layer", 3)
+    out_root = Path(cfg["logging"]["folder"]) / "heatmaps"
+    out_root.mkdir(parents=True, exist_ok=True)
+
+    dataset_name = cfg["data"].get("dataset", "mvtec")
+    assert dataset_name in cfg["data"]["test_root"] # check if eval on the same dataset the ckpt trained on
+    
+    test_root = Path(cfg["data"]["test_root"])
+    exts = ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.JPG", "*.JPEG", "*.PNG", "*.BMP", "*.TIF", "*.TIFF", "*.WEBP")
+    img_paths: List[Path] = []
+    for ext in exts:
+        img_paths += list(test_root.rglob(ext))
+    img_paths = sorted(set(img_paths))
+    if not img_paths:
+        raise FileNotFoundError(f"No images found under: {test_root}")
+    print(f"[INFO] Found {len(img_paths)} images under {test_root}")
+    
+    mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1,3,1,1)
+    std  = torch.tensor([0.229, 0.224, 0.225], device=device).view(1,3,1,1)
+
+    def _load_and_preprocess(path: Path):
+        pil = Image.open(path).convert("RGB")
+
+        W0, H0 = pil.size
+
+        pil_resized = pil.resize((crop, crop), Image.BILINEAR)
+
+        img = torch.from_numpy(np.array(pil_resized)).float() / 255.0   # [H,W,3], 0~1
+        img = img.permute(2, 0, 1).unsqueeze(0).to(device)              # [1,3,H,W]
+        img = (img - mean) / std
+
+        return pil, (W0, H0), img
+    
+    def _to_numpy_image(t_img: torch.Tensor):
+        # t_img: [1,3,H,W]
+        x = (t_img * std + mean).clamp(0, 1)
+        x = x[0].permute(1, 2, 0).detach().cpu().numpy()  # [H,W,3]
+        return (x * 255.0).astype(np.uint8)
+    
+    def _save_overlay_heatmap(rgb_uint8: np.ndarray, heat: np.ndarray, save_path: Path, alpha: float = 0.5):
+        """
+        rgb_uint8: [H,W,3] 0~255
+        heat:      [H,W]   0~1
+        """
+        import cv2
+        H, W = heat.shape
+
+        heat_255 = (heat * 255.0).clip(0, 255).astype(np.uint8)
+        heat_color = cv2.applyColorMap(heat_255, cv2.COLORMAP_JET)      # BGR
+        rgb_bgr = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2BGR)            # RGB->BGR
+        overlay = cv2.addWeighted(heat_color, alpha, rgb_bgr, 1 - alpha, 0)
+        overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+        Image.fromarray(overlay_rgb).save(save_path)
+
+    for i, path in enumerate(img_paths, 1):
+        pil_orig, (W0, H0), img = _load_and_preprocess(path)
+
+        enc = model.target_features(img, [str(path)], n_layer=n_layer)  # [1, P, D]
+        pred = model.predict(enc)                                       # [1, P, D]
+
+        l = F.mse_loss(enc, pred, reduction="none").mean(dim=2)         # [1, P]
+
+        h = w = int(math.sqrt(l.size(1)))
+        pix = F.interpolate(l.view(1, 1, h, w), size=img.shape[2:], mode="bilinear", align_corners=False)  # [1,1,H,W]
+        pix = pix.squeeze(0).squeeze(0)  # [H,W]
+
+        pmin, pmax = pix.min(), pix.max()
+        pix_norm = (pix - pmin) / (pmax - pmin + 1e-8)                  # [H,W], 0~1
+
+        img_uint8 = _to_numpy_image(img)                                 # [H,W,3] @ crop
+
+        rel = path.relative_to(test_root)
+        save_dir = (out_root / rel.parent)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        save_path = save_dir / f"{path.stem}_heatmap.png"
+
+        _save_overlay_heatmap(img_uint8, pix_norm.detach().cpu().numpy(), save_path)
+        print(f"[{i}/{len(img_paths)}] Saved: {save_path}")
 
 
 def main(args: Dict[str, Any]) -> None:
     ckpt = Path(args["ckpt_path"])
+    print(f"loading {ckpt}...")
     _evaluate_single_ckpt(ckpt, args)
     logger.info("Finished. Metrics appended to CSV.")
 
