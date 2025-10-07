@@ -1,6 +1,7 @@
 # FoundAD <img src="./assets/icon.png" alt="FoundAD logo showing a stylized magnifying glass over abstract shapes, representing anomaly detection in visual data. The logo is set against a neutral background and does not contain any text. The tone is professional and focused." width="30" height="30">
 
-The implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv]().
+The implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv](http://arxiv.org/abs/2510.01934
+).
 
   <a href="https://ymxlzgy.com/">Guangyao Zhai</a>, <a href="https://karolinezhy.github.io/">Yue Zhou</a>, <a href="">Xinyan Deng</a>, <a href="https://scholar.google.com/citations?user=f5DnPiEAAAAJ&hl=de">Lars Heckler</a>, <a href="https://www.cs.cit.tum.de/camp/members/cv-nassir-navab/nassir-navab/">Nassir Navab</a>, and <a href="https://www.cs.cit.tum.de/camp/members/benjamin-busam/">Benjamin Busam</a>
 <br>
