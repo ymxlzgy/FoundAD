@@ -1,12 +1,12 @@
 
-# FoundAD
+# FoundAD <img src="./assets/icon.png" alt="Logo" width="30" height="30">
 
 This repo contains implementation of the paper **Foundation Visual Encoders Are Secretly Few-Shot Anomaly Detectors**, [arXiv]().
 
 ## Table of Contents
 1. [Environment Setup](#environment-setup)
 2. [Quick Start](#quick-start)
-3. [Training and Testing](#train-test)
+3. [Training and Inference](#train-infer)
    - [Dataset Preparation](#dataset-preparation)
    - [Few-Shot Sampling](#few-shot-sampling)
    - [Model Training](#model-training)
@@ -22,13 +22,19 @@ All Python dependencies are listed in `requirements.txt`. We recommend Python �
 conda create -n foundad python=3.10
 conda activate foundad
 git clone git@github.com:ymxlzgy/FoundAD.git
+cd FoundAD
 pip install -r requirements.txt
 pip install -e .
 ```
 
 
 ## Quick Start
-Download our trained weights: [<u>1-shot on MVTec AD</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_1shot.zip) and [<u>1-shot on VisA</u>]() to `./logs/`.
+Before we start, please make sure you have the rights to use [DINOv3](https://github.com/facebookresearch/dinov3). Download our trained weights based on DINOv3 ViT-B/16, and put them to `./logs/`. 
+||1-shot|2-shot|4-shot|8-shot|
+|---------|:---------:|:---------:|:---------:|:---------:|
+|**MVTec AD**|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_4shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/mvtec_8shot.zip)|
+|**VisA**  |[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_1shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_2shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_4shot.zip)|[⬇️ <u>link</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/visa_8shot.zip)|
+
 
 Run
 ```bash
@@ -41,7 +47,7 @@ python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa d
 ```
 
 
-## Training and Testing
+## Training and Inference
 
 ### Dataset Preparation
 
@@ -50,8 +56,6 @@ python foundad/main.py mode=AD testing.segmentation_vis=True data.dataset=visa d
 | **MVTec AD** | Official site: [<u>Here</u>](https://www.mvtec.com/company/research/datasets/mvtec-ad) |
 | **VisA** | We use the structured dataset of [<u>RealNet</u>](https://github.com/cnulab/RealNet). |
 
-
-
 ### Few-Shot Sampling
 
 Create a **few-shot** subset with `sample.py`:
@@ -59,7 +63,7 @@ Create a **few-shot** subset with `sample.py`:
 ```bash
 python foundad/src/sample.py source=/media/ymxlzgy/Data21/xinyan/visa target=/media/ymxlzgy/Data21/xinyan/visa_tmp num_samples=2
 ```
-where `source` is the dataset folder, and `target` is the folder of few-shot samples.
+where `source` is the dataset folder, and `target` is the folder of few-shot samples. We also provide the data we sampled and trained the models on: [<u>⬇️ mvtec-few-shot</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/few-shot-mvtec.zip) and [<u>⬇️ visa-few-shot</u>](https://www.campar.in.tum.de/public_datasets/2025_foundad/few-shot-visa.zip).
 
 ### Model Training
 
